@@ -147,43 +147,53 @@ void RtNeuralGeneric::applyToneControls(float *out, const float *in, LV2_Handle 
 /**
  * This function carries model calculations for snapshot models
  */
-void RtNeuralGeneric::applyModel(float *out, const float *in, LV2_Handle instance, uint32_t n_samples)
+//void RtNeuralGeneric::applyModel(float *out, const float *in, LV2_Handle instance, uint32_t n_samples)
+//{
+//    RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
+//    uint32_t i;
+//    int skip = self->input_skip;
+//    switch((rnn_t)self->model_index)
+//    {
+//        case LSTM_40:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->lstm_40.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//        case LSTM_20:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->lstm_20.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//        case LSTM_16:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->lstm_16.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//        case LSTM_12:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->lstm_12.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//        case GRU_12:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->gru_12.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//        case GRU_8:
+//            for(i=0; i<n_samples; i++) {
+//                out[i] = self->gru_8.forward(in + i) + (in[i] * skip);
+//            }
+//            break;
+//    }
+//}
+
+void RtNeuralGeneric::applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, LV2_Handle instance, uint32_t n_samples)
 {
     RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
     uint32_t i;
     int skip = self->input_skip;
-    switch((rnn_t)self->model_index)
-    {
-        case LSTM_40:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->lstm_40.forward(in + i) + (in[i] * skip);
-            }
-            break;
-        case LSTM_20:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->lstm_20.forward(in + i) + (in[i] * skip);
-            }
-            break;
-        case LSTM_16:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->lstm_16.forward(in + i) + (in[i] * skip);
-            }
-            break;
-        case LSTM_12:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->lstm_12.forward(in + i) + (in[i] * skip);
-            }
-            break;
-        case GRU_12:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->gru_12.forward(in + i) + (in[i] * skip);
-            }
-            break;
-        case GRU_8:
-            for(i=0; i<n_samples; i++) {
-                out[i] = self->gru_8.forward(in + i) + (in[i] * skip);
-            }
-            break;
+    for(i=0; i<n_samples; i++) {
+        out[i] = model->forward2(in + i) + (in[i] * skip);
     }
 }
 
@@ -192,20 +202,31 @@ void RtNeuralGeneric::applyModel(float *out, const float *in, LV2_Handle instanc
 /**
  * This function carries model calculations for conditioned models with single param
  */
-void RtNeuralGeneric::applyModel(float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples)
+//void RtNeuralGeneric::applyModel(float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples)
+//{
+//    RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
+//    uint32_t i;
+//    int skip = self->input_skip;
+//    switch((rnn_t)self->model_index)
+//    {
+//        case LSTM_40_cond1:
+//            for(i=0; i<n_samples; i++) {
+//                self->inArray1[0] = in[i];
+//                self->inArray1[1] = self->rampValue(self->inArray1[1], param1, n_samples, i);
+//                out[i] = self->lstm_40_cond1.forward(self->inArray1) + (in[i] * skip);
+//            }
+//            break;
+//    }
+//}
+void RtNeuralGeneric::applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples)
 {
     RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
     uint32_t i;
     int skip = self->input_skip;
-    switch((rnn_t)self->model_index)
-    {
-        case LSTM_40_cond1:
-            for(i=0; i<n_samples; i++) {
-                self->inArray1[0] = in[i];
-                self->inArray1[1] = self->rampValue(self->inArray1[1], param1, n_samples, i);
-                out[i] = self->lstm_40_cond1.forward(self->inArray1) + (in[i] * skip);
-            }
-            break;
+    self->inArray1[1] = param1;
+    for(i=0; i<n_samples; i++) {
+        self->inArray1[0] = in[i];
+        out[i] = model->forward2(self->inArray1) + (in[i] * skip);
     }
 }
 
@@ -214,21 +235,33 @@ void RtNeuralGeneric::applyModel(float *out, const float *in, float param1, LV2_
 /**
  * This function carries model calculations for conditioned models with two params
  */
-void RtNeuralGeneric::applyModel(float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples)
+//void RtNeuralGeneric::applyModel(float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples)
+//{
+//    RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
+//    uint32_t i;
+//    int skip = self->input_skip;
+//    switch((rnn_t)self->model_index)
+//    {
+//        case LSTM_40_cond2:
+//            for(i=0; i<n_samples; i++) {
+//                self->inArray2[0] = in[i];
+//                self->inArray1[1] = self->rampValue(self->inArray1[1], param1, n_samples, i);
+//                self->inArray1[2] = self->rampValue(self->inArray1[2], param2, n_samples, i);
+//                out[i] = self->lstm_40.forward(self->inArray2) + (in[i] * skip);
+//            }
+//            break;
+//    }
+//}
+void RtNeuralGeneric::applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples)
 {
     RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
     uint32_t i;
     int skip = self->input_skip;
-    switch((rnn_t)self->model_index)
-    {
-        case LSTM_40_cond2:
-            for(i=0; i<n_samples; i++) {
-                self->inArray2[0] = in[i];
-                self->inArray1[1] = self->rampValue(self->inArray1[1], param1, n_samples, i);
-                self->inArray1[2] = self->rampValue(self->inArray1[2], param2, n_samples, i);
-                out[i] = self->lstm_40.forward(self->inArray2) + (in[i] * skip);
-            }
-            break;
+    self->inArray2[1] = param1;
+    self->inArray2[2] = param2;
+    for(i=0; i<n_samples; i++) {
+        self->inArray2[0] = in[i];
+        out[i] = model->forward2(self->inArray2) + (in[i] * skip);
     }
 }
 
@@ -301,6 +334,9 @@ LV2_Handle RtNeuralGeneric::instantiate(const LV2_Descriptor* descriptor, double
     self->model_new = 0;
 
     self->path_len = 0;
+
+    /* Instantiating dynamic model */
+    self->dynamic_model = new RTNeural::ModelT<float, 1, 1, RTNeural::LSTMLayerT<float, 1, 12>,RTNeural::DenseT<float, 12, 1>>;
 
     return (LV2_Handle)self;
 }
@@ -452,9 +488,13 @@ void RtNeuralGeneric::run(LV2_Handle instance, uint32_t n_samples)
                     // Json model file change, send it to the worker.
                     lv2_log_trace(&self->logger, "Queueing set message\n");
                     self->model_loaded = 0; // Stop model access in dsp code below
-                    self->schedule->schedule_work(self->schedule->handle,
-                                                    lv2_atom_total_size(&ev->body),
-                                                    &ev->body);
+//                    self->schedule->schedule_work(self->schedule->handle,
+//                                                    lv2_atom_total_size(&ev->body),
+//                                                    &v->body);e
+                    WorkerLoadMessage msg = { kWorkerLoad, {} };
+                    std::memcpy(msg.path, value+1, std::max(value->size, PATH_MAX - 1u));
+                    lv2_log_note(&self->logger, "DEBUG: LOADING NEW MODEL from path %s\n", msg.path);
+                    self->schedule->schedule_work(self->schedule->handle, sizeof(msg), &msg);
                 }
             } else {
                 lv2_log_trace(&self->logger,
@@ -488,13 +528,16 @@ void RtNeuralGeneric::run(LV2_Handle instance, uint32_t n_samples)
     if (net_bypass == 0.0f && self->model_loaded) {
         switch(self->input_size) { // Process model based on input_size (snapshot model or conditioned model)
             case 1:
-                applyModel(self->out_1, self->out_1, instance, n_samples);
+//                applyModel(self->out_1, self->out_1, instance, n_samples);
+                applyDynamicModel(self->dynamic_model, self->out_1, self->out_1, instance, n_samples);
                 break;
             case 2:
-                applyModel(self->out_1, self->out_1, param1, instance, n_samples);
+//                applyModel(self->out_1, self->out_1, param1, instance, n_samples);
+                applyDynamicModel(self->dynamic_model, self->out_1, self->out_1, param1, instance, n_samples);
                 break;
             case 3:
-                applyModel(self->out_1, self->out_1, param1, param2, instance, n_samples);
+//                applyModel(self->out_1, self->out_1, param1, param2, instance, n_samples);
+                applyDynamicModel(self->dynamic_model, self->out_1, self->out_1, param1, param2, instance, n_samples);
                 break;
             default:
                 break;
@@ -622,26 +665,53 @@ LV2_Worker_Status RtNeuralGeneric::work(LV2_Handle instance,
     RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
     int res;
 
-    const LV2_Atom* atom = (const LV2_Atom*)data;
+    const WorkerMessage* const msg = static_cast<const WorkerMessage*>(data);
+    lv2_log_note(&self->logger, "DEBUG: ENTERING SWITCH");
+    printf("DEBUG: ENTERING SWITCH\n");
 
-    // Handle set message (load json).
-    const LV2_Atom_Object* obj = (const LV2_Atom_Object*)data;
+    switch (msg->type)
+    {
+        case kWorkerLoad:
+            lv2_log_note(&self->logger, "LOADING MODEL FROM PATH: %s\n", static_cast<const WorkerLoadMessage*>(data)->path);
+            if (RTNeural::AbstractModelT* const newmodel = _loadModel(instance, static_cast<const WorkerLoadMessage*>(data)->path))
+            {
+                WorkerApplyMessage reply = { kWorkerApply, newmodel };
+                respond(handle, sizeof(reply), &reply);
+            }
+            else
+            {
+                lv2_log_note(&self->logger, "ERROR LOADING MODEL");
+            }
+            return LV2_WORKER_SUCCESS;
 
-    // Get file path from message
-    const LV2_Atom* file_path = read_set_file(&self->uris, obj);
-    if (!file_path) {
-        return LV2_WORKER_ERR_UNKNOWN;
+        case kWorkerFree:
+            delete static_cast<const WorkerApplyMessage*>(data)->model;
+            return LV2_WORKER_SUCCESS;
+
+        case kWorkerApply:
+            // should not happen!
+            break;
     }
+    return LV2_WORKER_ERR_UNKNOWN;
 
-    res = self->loadModel(instance, (const char*)(LV2_ATOM_BODY_CONST(file_path)));
-    if (res) {
-        return LV2_WORKER_ERR_UNKNOWN;
-    } else {
-        // Model is ready, send response to run() to enable dsp.
-        respond(handle, file_path->size, LV2_ATOM_BODY_CONST(file_path));
-    }
+//    // Handle set message (load json).
+//    const LV2_Atom_Object* obj = (const LV2_Atom_Object*)data;
+//
+//    // Get file path from message
+//    const LV2_Atom* file_path = read_set_file(&self->uris, obj);
+//    if (!file_path) {
+//        return LV2_WORKER_ERR_UNKNOWN;
+//    }
 
-    return LV2_WORKER_SUCCESS;
+//    res = self->loadModel(instance, (const char*)(LV2_ATOM_BODY_CONST(file_path)));
+//    if (res) {
+//        return LV2_WORKER_ERR_UNKNOWN;
+//    } else {
+//        // Model is ready, send response to run() to enable dsp.
+//        respond(handle, file_path->size, LV2_ATOM_BODY_CONST(file_path));
+//    }
+
+//    return LV2_WORKER_SUCCESS;
 }
 
 /**********************************************************************************************************************************************************/
@@ -656,6 +726,20 @@ LV2_Worker_Status RtNeuralGeneric::work(LV2_Handle instance,
 LV2_Worker_Status RtNeuralGeneric::work_response(LV2_Handle instance, uint32_t size, const void* data)
 {
     RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
+
+    const WorkerMessage* const msg = static_cast<const WorkerMessage*>(data);
+
+    if (msg->type != kWorkerApply)
+        return LV2_WORKER_ERR_UNKNOWN;
+
+    // prepare reply to free old model
+    WorkerApplyMessage reply = { kWorkerFree, self->dynamic_model };
+
+    // swap current model with new one
+    self->dynamic_model = static_cast<const WorkerApplyMessage*>(data)->model;
+
+    // send reply
+    self->schedule->schedule_work(self->schedule->handle, sizeof(reply), &reply);
 
     self->model_loaded = 1; // Enable dsp in next run() iteration
     self->model_new = 1; // Pending notification
@@ -705,70 +789,75 @@ int RtNeuralGeneric::loadModel(LV2_Handle instance, const char *path)
         self->type = modelData["layers"][self->n_layers-1-1]["type"];
         self->hidden_size = modelData["layers"][self->n_layers-1-1]["shape"].back().get<int>();
 
-        self->model_index = -1;
+        self->model_index = LSTM_12;
 
-        if(self->type == std::string("lstm")) {
-            if(self->hidden_size == 40 && self->input_size == 1) {
-                self->model_index = LSTM_40;
-            }
-            else if(self->hidden_size == 40 && self->input_size == 2) {
-                self->model_index = LSTM_40_cond1;
-            }
-            else if(self->hidden_size == 40 && self->input_size == 3) {
-                self->model_index = LSTM_40_cond2;
-            }
-            else if(self->hidden_size == 20 && self->input_size == 1) {
-                self->model_index = LSTM_20;
-            }
-            else if(self->hidden_size == 16 && self->input_size == 1) {
-                self->model_index = LSTM_16;
-            }
-            else if(self->hidden_size == 12 && self->input_size == 1) {
-                self->model_index = LSTM_12;
-            }
-        }
-        else if(self->type == std::string("gru")) {
-            if(self->hidden_size == 12 && self->input_size == 1) {
-                self->model_index = GRU_12;
-            }
-            else if(self->hidden_size == 8 && self->input_size == 1) {
-                self->model_index = GRU_8;
-            }
-        }
+//        if(self->type == std::string("lstm")) {
+//            if(self->hidden_size == 40 && self->input_size == 1) {
+//                self->model_index = LSTM_40;
+//            }
+//            else if(self->hidden_size == 40 && self->input_size == 2) {
+//                self->model_index = LSTM_40_cond1;
+//            }
+//            else if(self->hidden_size == 40 && self->input_size == 3) {
+//                self->model_index = LSTM_40_cond2;
+//            }
+//            else if(self->hidden_size == 20 && self->input_size == 1) {
+//                self->model_index = LSTM_20;
+//            }
+//            else if(self->hidden_size == 16 && self->input_size == 1) {
+//                self->model_index = LSTM_16;
+//            }
+//            else if(self->hidden_size == 12 && self->input_size == 1) {
+//                self->model_index = LSTM_12;
+//            }
+//        }
+//        else if(self->type == std::string("gru")) {
+//            if(self->hidden_size == 12 && self->input_size == 1) {
+//                self->model_index = GRU_12;
+//            }
+//            else if(self->hidden_size == 8 && self->input_size == 1) {
+//                self->model_index = GRU_8;
+//            }
+//        }
 
         if(self->model_index < 0)
             throw std::invalid_argument( "Unsupported model type" );
 
         std::ifstream jsonStream2(filePath, std::ifstream::binary);
-        switch((rnn_t)self->model_index)
-        {
-            case LSTM_40:
-                self->lstm_40.parseJson(jsonStream2, true);
-                break;
-            case LSTM_40_cond1:
-                self->lstm_40_cond1.parseJson(jsonStream2, true);
-                break;
-            case LSTM_40_cond2:
-                self->lstm_40_cond2.parseJson(jsonStream2, true);
-                break;
-            case LSTM_20:
-                self->lstm_20.parseJson(jsonStream2, true);
-                break;
-            case LSTM_16:
-                self->lstm_16.parseJson(jsonStream2, true);
-                break;
-            case LSTM_12:
-                self->lstm_12.parseJson(jsonStream2, true);
-                break;
-            case GRU_12:
-                self->gru_12.parseJson(jsonStream2, true);
-                break;
-            case GRU_8:
-                self->gru_8.parseJson(jsonStream2, true);
-                break;
-        }
+//        switch((rnn_t)self->model_index)
+//        {
+//            case LSTM_40:
+//                self->lstm_40.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_40_cond1:
+//                self->lstm_40_cond1.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_40_cond2:
+//                self->lstm_40_cond2.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_20:
+//                self->lstm_20.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_16:
+//                self->lstm_16.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_12:
+//                self->lstm_12.parseJson(jsonStream2, true);
+//                break;
+//            case GRU_12:
+//                self->gru_12.parseJson(jsonStream2, true);
+//                break;
+//            case GRU_8:
+//                self->gru_8.parseJson(jsonStream2, true);
+//                break;
+//        }
+//
+//        lv2_log_note(&self->logger, "Successfully loaded json file: %s\n", path);
 
-        lv2_log_note(&self->logger, "Successfully loaded json file: %s\n", path);
+        lv2_log_note(&self->logger, "LOADING DYNAMIC MODEL: %s\n", path);
+//        self->dynamic_model = RTNeural::json_parser::parseJson<float>(jsonStream2, true);
+        self->dynamic_model->parseJson(jsonStream2, true);
+        lv2_log_note(&self->logger, "Successfully loaded DYNAMIC MODEL: %s\n", path);
     }
     catch (const std::exception& e) {
         lv2_log_error(&self->logger, "Unable to load json file: %s\nError: %s\n", path, e.what());
@@ -777,50 +866,223 @@ int RtNeuralGeneric::loadModel(LV2_Handle instance, const char *path)
 
     // Before running inference, it is recommended to "reset" the state
     // of your model (if the model has state).
-    switch(self->model_index)
-    {
-        case LSTM_40:
-            self->lstm_40.reset();
-            break;
-        case LSTM_40_cond1:
-            self->lstm_40_cond1.reset();
-            break;
-        case LSTM_40_cond2:
-            self->lstm_40_cond2.reset();
-            break;
-        case LSTM_20:
-            self->lstm_20.reset();
-            break;
-        case LSTM_16:
-            self->lstm_16.reset();
-            break;
-        case LSTM_12:
-            self->lstm_12.reset();
-            break;
-        case GRU_12:
-            self->gru_12.reset();
-            break;
-        case GRU_8:
-            self->gru_8.reset();
-            break;
-    }
+//    switch(self->model_index)
+//    {
+//        case LSTM_40:
+//            self->lstm_40.reset();
+//            break;
+//        case LSTM_40_cond1:
+//            self->lstm_40_cond1.reset();
+//            break;
+//        case LSTM_40_cond2:
+//            self->lstm_40_cond2.reset();
+//            break;
+//        case LSTM_20:
+//            self->lstm_20.reset();
+//            break;
+//        case LSTM_16:
+//            self->lstm_16.reset();
+//            break;
+//        case LSTM_12:
+//            self->lstm_12.reset();
+//            break;
+//        case GRU_12:
+//            self->gru_12.reset();
+//            break;
+//        case GRU_8:
+//            self->gru_8.reset();
+//            break;
+//    }
+    self->dynamic_model->reset();
 
     // Pre-buffer to avoid "clicks" during initialization
     float in[2048] = { };
     float out[2048] = { };
     switch(self->input_size) {
         case 1:
-            applyModel(out, in, self, 2048);
+//            applyModel(out, in, self, 2048);
+            applyDynamicModel(self->dynamic_model, out, in, self, 2048);
             break;
         case 2:
-            applyModel(out, in, 0, self, 2048);
+//            applyModel(out, in, 0, self, 2048);
+            applyDynamicModel(self->dynamic_model, out, in, 0, self, 2048);
             break;
         case 3:
-            applyModel(out, in, 0, 0, self, 2048);
+//            applyModel(out, in, 0, 0, self, 2048);
+            applyDynamicModel(self->dynamic_model, out, in, 0, 0, self, 2048);
             break;
         default:
             break;
     }
 
     return 0;
+}
+
+RTNeural::AbstractModelT* RtNeuralGeneric::_loadModel(LV2_Handle instance, const char *path)
+{
+    RtNeuralGeneric *self = (RtNeuralGeneric*) instance;
+    RTNeural::ModelT<float, 1, 1, RTNeural::LSTMLayerT<float, 1, 12>,RTNeural::DenseT<float, 12, 1>> *temp_model;
+
+    self->path = path;
+    self->path_len = strlen(path);
+
+    std::string filePath;
+
+    filePath.append(path);
+
+
+
+    lv2_log_note(&self->logger, "Loading json file: %s\n", path);
+
+    try {
+        std::ifstream jsonStream1(filePath, std::ifstream::binary);
+        nlohmann::json modelData;
+        jsonStream1 >> modelData;
+
+        /* Understand which model type to load */
+        self->n_layers = modelData["layers"].size();
+        self->input_size = modelData["in_shape"].back().get<int>();
+        if(self->input_size > 1) {
+            throw std::invalid_argument("Values for input_size > 1 are not supported");
+        }
+
+        if (modelData["in_skip"].is_number()) {
+            self->input_skip = modelData["in_skip"].get<int>();
+            if (self->input_skip > 1)
+                throw std::invalid_argument("Values for in_skip > 1 are not supported");
+        }
+        else {
+            self->input_skip = 0;
+        }
+
+        self->type = modelData["layers"][self->n_layers-1-1]["type"];
+        self->hidden_size = modelData["layers"][self->n_layers-1-1]["shape"].back().get<int>();
+
+        self->model_index = LSTM_12;
+
+//        if(self->type == std::string("lstm")) {
+//            if(self->hidden_size == 40 && self->input_size == 1) {
+//                self->model_index = LSTM_40;
+//            }
+//            else if(self->hidden_size == 40 && self->input_size == 2) {
+//                self->model_index = LSTM_40_cond1;
+//            }
+//            else if(self->hidden_size == 40 && self->input_size == 3) {
+//                self->model_index = LSTM_40_cond2;
+//            }
+//            else if(self->hidden_size == 20 && self->input_size == 1) {
+//                self->model_index = LSTM_20;
+//            }
+//            else if(self->hidden_size == 16 && self->input_size == 1) {
+//                self->model_index = LSTM_16;
+//            }
+//            else if(self->hidden_size == 12 && self->input_size == 1) {
+//                self->model_index = LSTM_12;
+//            }
+//        }
+//        else if(self->type == std::string("gru")) {
+//            if(self->hidden_size == 12 && self->input_size == 1) {
+//                self->model_index = GRU_12;
+//            }
+//            else if(self->hidden_size == 8 && self->input_size == 1) {
+//                self->model_index = GRU_8;
+//            }
+//        }
+
+        if(self->model_index < 0)
+            throw std::invalid_argument( "Unsupported model type" );
+
+        std::ifstream jsonStream2(filePath, std::ifstream::binary);
+//        switch((rnn_t)self->model_index)
+//        {
+//            case LSTM_40:
+//                self->lstm_40.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_40_cond1:
+//                self->lstm_40_cond1.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_40_cond2:
+//                self->lstm_40_cond2.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_20:
+//                self->lstm_20.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_16:
+//                self->lstm_16.parseJson(jsonStream2, true);
+//                break;
+//            case LSTM_12:
+//                self->lstm_12.parseJson(jsonStream2, true);
+//                break;
+//            case GRU_12:
+//                self->gru_12.parseJson(jsonStream2, true);
+//                break;
+//            case GRU_8:
+//                self->gru_8.parseJson(jsonStream2, true);
+//                break;
+//        }
+//
+//        lv2_log_note(&self->logger, "Successfully loaded json file: %s\n", path);
+
+        lv2_log_note(&self->logger, "LOADING DYNAMIC MODEL: %s\n", path);
+//        self->dynamic_model = RTNeural::json_parser::parseJson<float>(jsonStream2, true);
+        temp_model->parseJson(jsonStream2, true);
+        lv2_log_note(&self->logger, "Successfully loaded DYNAMIC MODEL: %s\n", path);
+    }
+    catch (const std::exception& e) {
+        lv2_log_error(&self->logger, "Unable to load json file: %s\nError: %s\n", path, e.what());
+        return nullptr;
+    }
+
+    // Before running inference, it is recommended to "reset" the state
+    // of your model (if the model has state).
+//    switch(self->model_index)
+//    {
+//        case LSTM_40:
+//            self->lstm_40.reset();
+//            break;
+//        case LSTM_40_cond1:
+//            self->lstm_40_cond1.reset();
+//            break;
+//        case LSTM_40_cond2:
+//            self->lstm_40_cond2.reset();
+//            break;
+//        case LSTM_20:
+//            self->lstm_20.reset();
+//            break;
+//        case LSTM_16:
+//            self->lstm_16.reset();
+//            break;
+//        case LSTM_12:
+//            self->lstm_12.reset();
+//            break;
+//        case GRU_12:
+//            self->gru_12.reset();
+//            break;
+//        case GRU_8:
+//            self->gru_8.reset();
+//            break;
+//    }
+    temp_model->reset();
+
+    // Pre-buffer to avoid "clicks" during initialization
+    float in[2048] = { };
+    float out[2048] = { };
+    switch(self->input_size) {
+        case 1:
+//            applyModel(out, in, self, 2048);
+            applyDynamicModel(temp_model, out, in, self, 2048);
+            break;
+        case 2:
+//            applyModel(out, in, 0, self, 2048);
+            applyDynamicModel(temp_model, out, in, 0, self, 2048);
+            break;
+        case 3:
+//            applyModel(out, in, 0, 0, self, 2048);
+            applyDynamicModel(temp_model, out, in, 0, 0, self, 2048);
+            break;
+        default:
+            break;
+    }
+
+    return temp_model;
 }

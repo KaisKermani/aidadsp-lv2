@@ -41,6 +41,30 @@ typedef struct {
     char*  path;
 } PluginResponseMessage;
 
+
+enum WorkerMessageType {
+    kWorkerLoad,
+    kWorkerApply,
+    kWorkerFree
+};
+
+// common fields to all worker messages
+struct WorkerMessage {
+    WorkerMessageType type;
+};
+
+// WorkerMessage compatible, to be used for kWorkerLoad
+struct WorkerLoadMessage {
+    WorkerMessageType type;
+    char path[PATH_MAX];
+};
+
+// WorkerMessage compatible, to be used for kWorkerApply or kWorkerFree
+struct WorkerApplyMessage {
+    WorkerMessageType type;
+    RTNeural::AbstractModelT* model;
+};
+
 /* Define a macro for converting a gain in dB to a coefficient */
 #define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
 
@@ -118,6 +142,7 @@ public:
                                        const void*                 data);
     static LV2_Worker_Status work_response(LV2_Handle instance, uint32_t size, const void* data);
     static int loadModel(LV2_Handle instance, const char *path);
+    static RTNeural::AbstractModelT* _loadModel(LV2_Handle instance, const char *path);
 
     // Features
     LV2_URID_Map*        map;
@@ -174,24 +199,24 @@ private:
 
     /* Static: only json files matching models below will be loaded */
     /* Snapshot models: input_size = 1 */
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::LSTMLayerT<float, 1, 40>,
-        RTNeural::DenseT<float, 40, 1>> lstm_40;
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::LSTMLayerT<float, 1, 20>,
-        RTNeural::DenseT<float, 20, 1>> lstm_20;
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::LSTMLayerT<float, 1, 16>,
-        RTNeural::DenseT<float, 16, 1>> lstm_16;
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::LSTMLayerT<float, 1, 12>,
-        RTNeural::DenseT<float, 12, 1>> lstm_12;
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::GRULayerT<float, 1, 12>,
-        RTNeural::DenseT<float, 12, 1>> gru_12;
-    RTNeural::ModelT<float, 1, 1,
-        RTNeural::GRULayerT<float, 1, 8>,
-        RTNeural::DenseT<float, 8, 1>> gru_8;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::LSTMLayerT<float, 1, 40>,
+//        RTNeural::DenseT<float, 40, 1>> lstm_40;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::LSTMLayerT<float, 1, 20>,
+//        RTNeural::DenseT<float, 20, 1>> lstm_20;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::LSTMLayerT<float, 1, 16>,
+//        RTNeural::DenseT<float, 16, 1>> lstm_16;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::LSTMLayerT<float, 1, 12>,
+//        RTNeural::DenseT<float, 12, 1>> lstm_12;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::GRULayerT<float, 1, 12>,
+//        RTNeural::DenseT<float, 12, 1>> gru_12;
+//    RTNeural::ModelT<float, 1, 1,
+//        RTNeural::GRULayerT<float, 1, 8>,
+//        RTNeural::DenseT<float, 8, 1>> gru_8;
 
     /* Conditioned models: input_size > 1 */
     RTNeural::ModelT<float, 2, 1,
@@ -203,6 +228,7 @@ private:
 
     /* Dynamic: whatever json model will be loaded but poor performance */
     //std::unique_ptr<RTNeural::Model<float>> model;
+    RTNeural::AbstractModelT* dynamic_model;
 
     int model_index; /* Used to store model type */
 
@@ -213,8 +239,11 @@ private:
     static float rampValue(float start, float end, uint32_t n_samples, uint32_t index);
     static void applyGainRamp(float *out, const float *in, float start, float end, uint32_t n_samples);
     static void applyBiquadFilter(float *out, const float *in, Biquad *filter, uint32_t n_samples);
-    static void applyModel(float *out, const float *in, LV2_Handle instance, uint32_t n_samples);
-    static void applyModel(float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples);
-    static void applyModel(float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples);
+//    static void applyModel(float *out, const float *in, LV2_Handle instance, uint32_t n_samples);
+//    static void applyModel(float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples);
+//    static void applyModel(float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples);
+    static void applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, LV2_Handle instance, uint32_t n_samples);
+    static void applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, float param1, LV2_Handle instance, uint32_t n_samples);
+    static void applyDynamicModel(RTNeural::AbstractModelT* model, float *out, const float *in, float param1, float param2, LV2_Handle instance, uint32_t n_samples);
     static void applyToneControls(float *out, const float *in, LV2_Handle instance, uint32_t n_samples);
 };
